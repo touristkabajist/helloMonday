@@ -419,9 +419,9 @@ tr.subtotal td{background:#fbf3ff;font-weight:800;color:#6d28d9}
   <section class="view" id="view-employee">
     <div class="card">
       <h2><span class="deco">👥</span>员工登记（以员工为单元建立数据库）</h2>
-      <div class="tip">工号由系统按 <b>P+8 位数字</b> 自动生成且全库唯一、不可修改；填写出生日期后，身份证号按国标 GB 11643（地区码 330106 + 出生年月日 + 顺序码 + 校验码）自动生成。</div>
+      <div class="tip">员工工号由用户手动填写，格式为 <b>P + 8 位数字</b>（如 P00000001），保存时系统自动校验格式并保证全库唯一；填写出生日期后，身份证号按国标 GB 11643（地区码 330106 + 出生年月日 + 顺序码 + 校验码）自动生成。</div>
       <div class="form-row">
-        <div><label class="fld">员工工号（自动生成 · 唯一）</label><input type="text" id="epEmpNo" readonly placeholder="保存时自动生成"></div>
+        <div><label class="fld">员工工号 *（P+8 位数字 · 全库唯一）</label><input type="text" id="epEmpNo" maxlength="9" placeholder="如 P00000001" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase().replace(/[^P0-9]/g,'').slice(0,9)"></div>
         <div><label class="fld">姓名 *</label><input type="text" id="epName" placeholder="员工姓名"></div>
         <div><label class="fld">所在部门 *</label><input type="text" id="epDept" placeholder="如：企划部"></div>
         <div><label class="fld">岗位</label><input type="text" id="epPos" placeholder="如：策划专员"></div>
@@ -450,7 +450,7 @@ tr.subtotal td{background:#fbf3ff;font-weight:800;color:#6d28d9}
       <h2><span class="deco">📋</span>员工名册</h2>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>工号</th><th>姓名</th><th>部门</th><th>岗位</th><th>性别</th><th>手机长号</th><th>手机短号</th><th>出生日期</th><th>身份证号</th><th>年度应休</th><th>已休</th><th>剩余</th><th>操作</th></tr></thead>
+          <thead><tr><th>工号</th><th>姓名</th><th>部门</th><th>岗位</th><th>年度应休</th><th>已休</th><th>剩余</th><th>操作</th></tr></thead>
           <tbody id="epRows"></tbody>
         </table>
       </div>
@@ -603,11 +603,11 @@ function genUniqueIdCard(birth,gender){
   }
   return genIdCard(birth,900+Math.floor(Math.random()*99));
 }
-/* 工号：P + 8 位递增数字，全库唯一 */
-function nextEmpNo(){
-  let max=0;
-  db.employees.forEach(e=>{const m=/^P(\d{8})$/.exec(e.empNo||'');if(m)max=Math.max(max,Number(m[1]));});
-  return 'P'+String(max+1).padStart(8,'0');
+/* 工号：P + 8 位数字，用户手动填写，保存时校验格式与全库唯一 */
+const validEmpNo=no=>/^P\d{8}$/.test(no);
+/* 唯一性检查：编辑场景通过 excludeId 排除员工自身 */
+function empNoTaken(no,excludeId){
+  return db.employees.some(e=>e.empNo===no&&e.id!==excludeId);
 }
 const maskId=id=>id?id.slice(0,6)+'********'+id.slice(14):'—';
 const validPhone=p=>/^1[3-9]\d{9}$/.test(p);
@@ -977,8 +977,12 @@ function renderLeave(){
 function saveEmployee(){
   const name=$('#epName').value.trim();
   if(!name){toast('请填写姓名');return;}
+  const empNo=$('#epEmpNo').value.trim().toUpperCase();
+  if(!empNo){toast('请填写员工工号');return;}
+  if(!validEmpNo(empNo)){toast('工号格式应为 P + 8 位数字，如 P00000001');return;}
   const editId=$('#epEditId').value;
-  const data={name,dept:$('#epDept').value.trim()||'未分组',pos:$('#epPos').value.trim(),quota:Number($('#epQuota').value)||0};
+  if(empNoTaken(empNo,editId)){toast('工号 '+empNo+' 已存在，工号全库唯一不可重复');return;}
+  const data={empNo,name,dept:$('#epDept').value.trim()||'未分组',pos:$('#epPos').value.trim(),quota:Number($('#epQuota').value)||0};
   if(editId){Object.assign(empById(editId),data);toast('员工信息已更新 ✨');}
   else{
     if(db.employees.some(e=>e.name===name&&e.dept===data.dept)){toast('同部门下已存在该员工');return;}
@@ -990,13 +994,13 @@ function saveEmployee(){
 }
 function editEmployee(id){
   const e=empById(id);
-  $('#epEditId').value=id;$('#epName').value=e.name;$('#epDept').value=e.dept==='未分组'?'':e.dept;
+  $('#epEditId').value=id;$('#epEmpNo').value=e.empNo||'';$('#epName').value=e.name;$('#epDept').value=e.dept==='未分组'?'':e.dept;
   $('#epPos').value=e.pos||'';$('#epQuota').value=e.quota||0;
   $('#epCancelBtn').style.display='inline-flex';
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function resetEmpForm(){
-  $('#epEditId').value='';$('#epName').value='';$('#epDept').value='';$('#epPos').value='';$('#epQuota').value=10;
+  $('#epEditId').value='';$('#epEmpNo').value='';$('#epName').value='';$('#epDept').value='';$('#epPos').value='';$('#epQuota').value=10;
   $('#epCancelBtn').style.display='none';
 }
 function deleteEmployee(id){
@@ -1027,13 +1031,13 @@ function renderEmployee(){
 
   $('#epRows').innerHTML=db.employees.map(e=>{
     const used=annualUsed(e.id);
-    return `<tr><td class="name-cell">${e.name}</td><td>${e.dept||'—'}</td><td>${e.pos||'—'}</td>
+    return `<tr><td class="name-cell">${e.empNo||'—'}</td><td class="name-cell">${e.name}</td><td>${e.dept||'—'}</td><td>${e.pos||'—'}</td>
     <td>${e.quota||0}</td><td>${used}</td><td><b style="color:#7c3aed">${Math.max(0,h((e.quota||0)-used))}</b></td>
     <td>
       <button class="btn btn-purple btn-sm" onclick="editEmployee('${e.id}')">编辑</button>
       <button class="btn btn-danger btn-sm" onclick="deleteEmployee('${e.id}')">删除</button>
     </td></tr>`;
-  }).join('')||emptyRow(7);
+  }).join('')||emptyRow(8);
 }
 
 /* ================= 6. 符号对照 ================= */
@@ -1073,10 +1077,10 @@ function seedDemo(){
   if(db.employees.length&&!confirm('载入示例数据会覆盖当前数据，确定继续吗？'))return;
   db=freshDb();
   const defs=[
-    {name:'鹿乃',dept:'企划部',pos:'策划专员',quota:10},
-    {name:'星野',dept:'企划部',pos:'视觉设计',quota:10},
-    {name:'泷川',dept:'技术部',pos:'前端工程师',quota:15},
-    {name:'千代',dept:'技术部',pos:'测试工程师',quota:7}
+    {empNo:'P00000001',name:'鹿乃',dept:'企划部',pos:'策划专员',quota:10},
+    {empNo:'P00000002',name:'星野',dept:'企划部',pos:'视觉设计',quota:10},
+    {empNo:'P00000003',name:'泷川',dept:'技术部',pos:'前端工程师',quota:15},
+    {empNo:'P00000004',name:'千代',dept:'技术部',pos:'测试工程师',quota:7}
   ];
   defs.forEach(d=>db.employees.push({id:uid(),...d}));
   const [e1,e2,e3,e4]=db.employees.map(e=>e.id);
