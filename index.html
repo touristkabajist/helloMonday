@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>樱律 · 出勤管理系统 2026</title>
+<title>周一你好·出勤管理系统 2026</title>
 <style>
 /* ============ 主题变量 · 二次元樱花配色 ============ */
 :root{
@@ -251,8 +251,8 @@ tr.subtotal td{background:#fbf3ff;font-weight:800;color:#6d28d9}
   <header class="hero">
     <div class="mascot">🐰</div>
     <div>
-      <h1><span class="sakura">❀</span> 樱律出勤管理系统 <span class="sakura">❀</span></h1>
-      <div class="sub">2026 年度 · 本地二次元考勤台 · 数据仅保存在本机浏览器</div>
+      <h1><span class="sakura">❀</span> 周一你好·出勤管理系统 <span class="sakura">❀</span></h1>
+      <div class="sub">数据仅保存在本地服务器</div>
       <div style="margin-top:8px">
         <span class="badge">🔓 统一权限模式</span>
         <span class="badge">💾 本地数据库</span>
@@ -498,7 +498,7 @@ tr.subtotal td{background:#fbf3ff;font-weight:800;color:#6d28d9}
 
 <script>
 /* ================================================================
- * 樱律出勤管理系统 · 纯前端本地版
+ * 周一你好·出勤管理系统 · 纯前端本地版
  * 数据存储：localStorage（键名 anime_attendance_v1）
  * ================================================================ */
 const STORE_KEY='anime_attendance_v1';
@@ -1047,7 +1047,7 @@ function exportData(){
   const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download=`樱律考勤备份_${new Date().toISOString().slice(0,10)}.json`;
+  a.download=`周一你好考勤备份_${new Date().toISOString().slice(0,10)}.json`;
   a.click();URL.revokeObjectURL(a.href);toast('备份文件已下载 ⬇');
 }
 function importData(ev){
