@@ -13,6 +13,7 @@ global.localStorage = {
   removeItem: k => { delete store[k]; }
 };
 global.confirm = () => true;
+global.window = { scrollTo() {} };
 const els = {};
 function makeEl(sel) {
   const el = {
@@ -42,7 +43,7 @@ global.document = {
   createElement: () => makeEl('created')
 };
 
-const api = new Function(script + '\nreturn {get db(){return db;}, seedDemo, openDay, saveDay, saveLeave, deleteLeave, calcLvDays, renderAll, jumpMonth, $, calMatrix, SYMBOLS, workingDates};')();
+const api = new Function(script + '\nreturn {get db(){return db;}, seedDemo, openDay, saveDay, saveLeave, deleteLeave, calcLvDays, renderAll, jumpMonth, $, calMatrix, SYMBOLS, workingDates, validEmpNo, empNoTaken, saveEmployee, editEmployee, resetEmpForm};')();
 let db = api.db;
 
 let pass = 0;
@@ -120,5 +121,37 @@ ok('7 月出勤率已参与计算（非 —）', api.$('#rateTable').innerHTML.i
 const e3 = db.employees.find(e => e.quota === 15);
 const nUsed = db.attendance.filter(r => r.emp === e3.id && r.sym === 'N').length;
 ok('年假已休天数与 N 符号一致 (泷川=5)', nUsed === 5);
+
+/* 10. 工号：手动填写 + P+8 位数字格式校验 + 全库唯一 */
+ok('validEmpNo 接受合法工号', api.validEmpNo('P00000001') && api.validEmpNo('P99999999'));
+ok('validEmpNo 拒绝小写/位数错/前缀错/含字母/空值',
+  !api.validEmpNo('p00000001') && !api.validEmpNo('P1234567') && !api.validEmpNo('P123456789')
+  && !api.validEmpNo('X00000001') && !api.validEmpNo('P0000000A') && !api.validEmpNo(''));
+ok('示例数据 4 人员工工号全部合规', db.employees.every(e=>api.validEmpNo(e.empNo)));
+ok('示例工号全库唯一且为 P00000001~04', new Set(db.employees.map(e=>e.empNo)).size===4
+  && ['P00000001','P00000002','P00000003','P00000004'].every(no=>db.employees.some(e=>e.empNo===no)));
+ok('empNoTaken 识别占用并在编辑时排除自身',
+  api.empNoTaken('P00000001',null)===true && api.empNoTaken('P00000001',db.employees[0].id)===false
+  && api.empNoTaken('P88888888',null)===false);
+const empCount=()=>db.employees.length;
+api.$('#epName').value='重复测试员';api.$('#epDept').value='测试部';api.$('#epEmpNo').value='P00000001';
+api.saveEmployee();
+ok('重复工号保存被拒（员工数不增）', empCount()===4 && !db.employees.some(e=>e.name==='重复测试员'));
+api.$('#epEmpNo').value='P123';api.saveEmployee();
+ok('格式错误工号保存被拒', empCount()===4);
+api.$('#epEmpNo').value='';api.saveEmployee();
+ok('空工号保存被拒', empCount()===4);
+api.$('#epEmpNo').value='P00000005';api.saveEmployee();
+ok('合法工号保存成功并落库', empCount()===5 && db.employees.some(e=>e.empNo==='P00000005'&&e.name==='重复测试员'));
+api.$('#epName').value='小写归一测试';api.$('#epEmpNo').value='p00000006';api.saveEmployee();
+ok('小写工号自动归一为大写', empCount()===6 && db.employees.some(e=>e.empNo==='P00000006'));
+const e1=db.employees[0].id, beforeName=db.employees[0].name;
+api.editEmployee(e1);
+ok('编辑回填工号', api.$('#epEmpNo').value==='P00000001' && api.$('#epEditId').value===e1);
+api.$('#epName').value='鹿乃改';api.saveEmployee();
+ok('编辑保存同号不触发唯一冲突且更新生效', empCount()===6
+  && db.employees[0].name==='鹿乃改' && db.employees[0].empNo==='P00000001');
+api.renderAll();
+ok('名册渲染包含工号列内容', api.$('#epRows').innerHTML.includes('P00000001') && api.$('#epRows').innerHTML.includes('P00000006'));
 
 console.log(`\nALL ${pass} CHECKS PASSED`);
