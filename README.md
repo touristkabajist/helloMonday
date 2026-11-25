@@ -1,5 +1,4 @@
-[README.md](https://github.com/user-attachments/files/35392975/README.md)
-# hello_monday# 🌸 樱律 · 出勤管理系统（2026 本地版）
+# 🌸 樱律 · 出勤管理系统（2026 本地版）
 
 二次元樱花风的纯前端出勤管理系统，**零依赖、零安装、完全离线**，双击 `index.html` 即可在浏览器中使用。
 
