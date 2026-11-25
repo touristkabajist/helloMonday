@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>樱律 · 出勤管理系统 2026</title>
+<style>
+/* ============ 主题变量 · 二次元樱花配色 ============ */
+:root{
+  --pink:#ff8fb8; --pink-deep:#f06292; --pink-soft:#ffe3ef;
+  --purple:#a78bfa; --purple-soft:#efe9ff;
+  --blue:#7cc7ff; --blue-soft:#e3f2ff;
+  --mint:#5fd4b0; --mint-soft:#d8f6ec;
+  --amber:#ffc46b; --amber-soft:#fff1d9;
+  --ink:#5b4a67; --ink-soft:#8a7b98;
+  --card:rgba(255,255,255,.92);
+  --line:#ffd9e8;
+  --bg1:#fff6fb; --bg2:#f3edff; --bg3:#eaf6ff;
+  --shadow:0 12px 32px rgba(219,144,179,.20);
+  --shadow-sm:0 4px 14px rgba(219,144,179,.16);
+  --radius:22px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Segoe UI",sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 12% 8%, var(--pink-soft) 0, transparent 38%),
+    radial-gradient(circle at 88% 4%, var(--purple-soft) 0, transparent 42%),
+    radial-gradient(circle at 80% 92%, var(--blue-soft) 0, transparent 40%),
+    linear-gradient(160deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+  background-attachment:fixed;
+  min-height:100vh;
+  padding-bottom:60px;
+}
+/* 圆点纹理 */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(rgba(255,143,184,.18) 1.5px,transparent 1.6px);
+  background-size:26px 26px;opacity:.5;
+}
+/* 飘落樱花 */
+.petal{position:fixed;top:-40px;z-index:1;pointer-events:none;font-size:18px;opacity:.75;
+  animation:fall linear infinite;filter:drop-shadow(0 2px 3px rgba(240,98,146,.25))}
+@keyframes fall{
+  0%{transform:translateY(-6vh) translateX(0) rotate(0)}
+  100%{transform:translateY(108vh) translateX(6vw) rotate(360deg)}
+}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes pop{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes wiggle{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+
+.wrap{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:0 22px}
+
+/* ============ 顶部 ============ */
+header.hero{
+  margin:22px 0 16px;padding:22px 28px;border-radius:var(--radius);
+  background:linear-gradient(120deg,#ffd9e8 0%,#ece2ff 55%,#d9eeff 100%);
+  border:2px solid #fff;box-shadow:var(--shadow);
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+}
+.mascot{font-size:46px;animation:floaty 3.2s ease-in-out infinite;filter:drop-shadow(0 6px 10px rgba(240,98,146,.3))}
+.hero h1{font-size:26px;letter-spacing:1px;color:#7a4d6b}
+.hero h1 .sakura{color:var(--pink-deep)}
+.hero .sub{font-size:13px;color:var(--ink-soft);margin-top:4px}
+.badge{
+  display:inline-block;font-size:12px;padding:3px 12px;border-radius:999px;margin-right:8px;
+  background:#fff;color:var(--pink-deep);border:1.5px solid var(--pink);box-shadow:var(--shadow-sm);
+}
+.hero-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hero-right select{min-width:150px}
+
+/* ============ 导航 ============ */
+nav.tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.tab-btn{
+  border:2px solid var(--line);background:var(--card);border-radius:999px;
+  padding:10px 20px;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;
+  transition:all .22s ease;box-shadow:var(--shadow-sm);
+}
+.tab-btn:hover{transform:translateY(-3px);border-color:var(--pink)}
+.tab-btn.active{
+  background:linear-gradient(120deg,var(--pink),var(--purple));color:#fff;border-color:transparent;
+  box-shadow:0 8px 20px rgba(240,98,146,.35);
+}
+.view{display:none;animation:pop .35s ease}
+.view.active{display:block}
+
+/* ============ 卡片/通用 ============ */
+.card{
+  background:var(--card);border:2px solid #fff;border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:22px;margin-bottom:18px;
+}
+.card h2{font-size:17px;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:#7a4d6b}
+.card h2 .deco{font-size:18px}
+.grid{display:grid;gap:14px}
+.grid-4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+label.fld{display:block;font-size:12.5px;color:var(--ink-soft);font-weight:600;margin-bottom:6px}
+input,select,textarea{
+  width:100%;padding:10px 13px;border:1.8px solid #f0d4e2;border-radius:14px;font-size:13.5px;
+  color:var(--ink);background:#fff;outline:none;transition:border .2s,box-shadow .2s;font-family:inherit;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,143,184,.18)}
+textarea{resize:vertical;min-height:64px}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px}
+.btn{
+  border:none;border-radius:999px;padding:10px 22px;font-size:13.5px;font-weight:700;cursor:pointer;
+  transition:all .2s ease;font-family:inherit;display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(120deg,var(--pink),var(--pink-deep));color:#fff;box-shadow:0 6px 16px rgba(240,98,146,.35)}
+.btn-purple{background:linear-gradient(120deg,var(--purple),#8b5cf6);color:#fff;box-shadow:0 6px 16px rgba(139,92,246,.32)}
+.btn-mint{background:linear-gradient(120deg,#6ee7b7,var(--mint));color:#fff;box-shadow:0 6px 16px rgba(95,212,176,.32)}
+.btn-ghost{background:#fff;color:var(--pink-deep);border:1.8px solid var(--pink)}
+.btn-danger{background:linear-gradient(120deg,#fb7185,#e11d48);color:#fff;box-shadow:0 6px 16px rgba(225,29,72,.3)}
+.btn-sm{padding:6px 14px;font-size:12px}
+.muted{color:var(--ink-soft);font-size:12.5px}
+.tip{background:var(--purple-soft);border-radius:14px;padding:10px 14px;font-size:12.5px;color:#6d5a86;margin-bottom:14px;border:1.5px dashed #c9b8f0}
+input[readonly]{background:#faf5fb;color:var(--ink-soft);cursor:not-allowed}
+.id-preview{
+  background:linear-gradient(120deg,#fff0f7,#f3edff);border:1.8px dashed var(--pink);
+  border-radius:14px;padding:10px 13px;font-size:13.5px;font-weight:700;color:#7c3aed;
+  letter-spacing:.6px;min-height:42px;display:flex;align-items:center;
+}
+.field-ok{border-color:#34d399 !important}
+.field-err{border-color:#e11d48 !important}
+
+/* KPI */
+.kpi{border-radius:18px;padding:18px;position:relative;overflow:hidden;color:#fff;box-shadow:var(--shadow-sm)}
+.kpi .num{font-size:28px;font-weight:800;margin-top:4px}
+.kpi .lbl{font-size:12.5px;opacity:.92}
+.kpi .ico{position:absolute;right:12px;top:10px;font-size:30px;opacity:.35}
+.kpi.pink{background:linear-gradient(135deg,#ff9ec2,#f06292)}
+.kpi.purple{background:linear-gradient(135deg,#b6a3ff,#8b5cf6)}
+.kpi.blue{background:linear-gradient(135deg,#8fd3ff,#38bdf8)}
+.kpi.mint{background:linear-gradient(135deg,#7ee8c6,#34d399)}
+.kpi.amber{background:linear-gradient(135deg,#ffd28e,#f59e0b)}
+
+/* 表格 */
+.table-wrap{overflow-x:auto;border-radius:16px;border:1.8px solid #f6dce8}
+table{border-collapse:collapse;width:100%;font-size:12.8px;min-width:560px;background:#fff}
+th,td{padding:9px 10px;text-align:center;border-bottom:1px solid #fce7f1;white-space:nowrap}
+th{background:linear-gradient(120deg,#ffe8f2,#f0e8ff);color:#7a4d6b;font-weight:700;position:sticky;top:0}
+tbody tr:hover{background:#fff7fb}
+td.name-cell,th.name-cell{text-align:left;position:sticky;left:0;background:#fff;z-index:1;font-weight:600}
+th.name-cell{background:#ffe8f2;z-index:2}
+tr.subtotal td{background:#fbf3ff;font-weight:800;color:#6d28d9}
+.rate-good{color:#059669;font-weight:700}
+.rate-mid{color:#d97706;font-weight:700}
+.rate-bad{color:#e11d48;font-weight:700}
+.rate-na{color:#c4b5cf}
+
+/* 考勤符号 chip */
+.chip{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:12px;padding:2px 0;width:100%;height:100%;font-weight:800;line-height:1.15}
+.chip .s{font-size:17px}
+.chip .l{font-size:10px;font-weight:600;opacity:.85}
+.mini-chip{display:inline-block;border-radius:8px;padding:1px 8px;font-size:11.5px;font-weight:700}
+.exc-tag{display:inline-block;font-size:10px;border-radius:6px;padding:0 5px;margin:1px;font-weight:700;color:#fff}
+.exc-迟到{background:#f59e0b}.exc-早退{background:#3b82f6}.exc-旷工{background:#e11d48}
+
+/* 日历 */
+.cal-head{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.cal-head .title{font-size:18px;font-weight:800;color:#7a4d6b;min-width:130px;text-align:center}
+.week-grid,.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.week-grid div{text-align:center;font-size:12.5px;font-weight:800;color:var(--ink-soft);padding:6px 0}
+.cal-grid{margin-top:6px}
+.cal-cell{
+  min-height:92px;border-radius:16px;border:1.8px solid #f6dce8;background:#fff;padding:7px;cursor:pointer;
+  transition:all .18s ease;position:relative;display:flex;flex-direction:column;gap:3px;
+}
+.cal-cell:hover{transform:translateY(-3px);border-color:var(--pink);box-shadow:var(--shadow-sm)}
+.cal-cell.empty{background:transparent;border:none;cursor:default;box-shadow:none}
+.cal-cell.weekend{background:#fdf4ff}
+.cal-cell.holiday{background:#fff7ed}
+.cal-cell .date-num{font-size:12.5px;font-weight:800;color:var(--ink-soft)}
+.cal-cell .note-dot{position:absolute;right:8px;top:7px;color:var(--purple);font-size:11px}
+.legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+.legend .mini-chip{font-size:12px;padding:3px 10px}
+
+/* 弹窗 */
+.modal-mask{
+  position:fixed;inset:0;background:rgba(122,77,107,.35);backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;z-index:50;padding:20px;
+}
+.modal-mask.show{display:flex;animation:pop .25s ease}
+.modal{
+  background:#fff;border-radius:24px;padding:26px;width:min(460px,94vw);max-height:90vh;overflow-y:auto;
+  border:3px solid var(--pink-soft);box-shadow:0 24px 60px rgba(122,77,107,.35);
+}
+.modal h3{color:#7a4d6b;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+
+/* 符号卡片 */
+.sym-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.sym-card{border-radius:16px;padding:14px;text-align:center;border:2px solid #fff;box-shadow:var(--shadow-sm);transition:transform .2s}
+.sym-card:hover{transform:translateY(-4px) rotate(-1deg)}
+.sym-card .big{font-size:26px;font-weight:900}
+.sym-card .name{font-size:13px;font-weight:700;margin-top:4px}
+.sym-card .en{font-size:10.5px;opacity:.7;margin-top:2px}
+
+/* 年假进度条 */
+.quota-card{border-radius:18px;padding:16px;background:linear-gradient(135deg,#fff,#fff4fa);border:2px solid #ffe0ee}
+.quota-card .qn{font-weight:800;font-size:15px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.progress{height:12px;border-radius:999px;background:#fce7f1;overflow:hidden;margin:8px 0}
+.progress i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--pink),var(--purple));transition:width .5s}
+.quota-nums{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft)}
+.quota-nums b{color:var(--pink-deep);font-size:14px}
+
+/* 记录列表条目 */
+.rec-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.rec{display:flex;align-items:center;gap:10px;background:#fff8fc;border:1.5px solid #f6dce8;border-radius:14px;padding:9px 13px;font-size:12.8px;flex-wrap:wrap}
+.rec .sp{margin-left:auto;display:flex;gap:6px;align-items:center}
+.tag-cat{border-radius:8px;padding:2px 9px;font-size:11px;font-weight:700;color:#fff}
+.cat-工作日{background:#8b5cf6}.cat-公休日{background:#38bdf8}.cat-法定节假日{background:#f59e0b}
+.mode-加班{color:#e11d48;font-weight:800}.mode-调休{color:#0d9488;font-weight:800}
+
+/* Toast */
+#toast{
+  position:fixed;bottom:34px;left:50%;transform:translateX(-50%) translateY(30px);opacity:0;
+  background:linear-gradient(120deg,var(--pink-deep),#8b5cf6);color:#fff;padding:12px 26px;border-radius:999px;
+  font-size:13.5px;font-weight:700;box-shadow:0 10px 28px rgba(122,77,107,.35);z-index:99;
+  transition:all .3s ease;pointer-events:none;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty-hint{text-align:center;color:var(--ink-soft);font-size:13px;padding:26px 0}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar select,.toolbar input{width:auto;min-width:140px}
+.section-title{font-size:14px;font-weight:800;color:#7a4d6b;margin:16px 0 10px;display:flex;align-items:center;gap:6px}
+@media(max-width:640px){
+  .cal-cell{min-height:72px;padding:4px}
+  .chip .l{display:none}
+  .hero h1{font-size:21px}
+}
+</style>
+</head>
+<body>
+<!-- 樱花花瓣 -->
+<div class="petal" style="left:6%;animation-duration:11s;animation-delay:0s">🌸</div>
+<div class="petal" style="left:22%;animation-duration:14s;animation-delay:3s;font-size:14px">🌸</div>
+<div class="petal" style="left:41%;animation-duration:12s;animation-delay:6s">🌸</div>
+<div class="petal" style="left:63%;animation-duration:15s;animation-delay:1.5s;font-size:15px">🌸</div>
+<div class="petal" style="left:79%;animation-duration:10s;animation-delay:4.5s">🌸</div>
+<div class="petal" style="left:93%;animation-duration:13s;animation-delay:8s;font-size:13px">🌸</div>
+
+<div class="wrap">
+  <!-- ===== 顶部 ===== -->
+  <header class="hero">
+    <div class="mascot">🐰</div>
+    <div>
+      <h1><span class="sakura">❀</span> 樱律出勤管理系统 <span class="sakura">❀</span></h1>
+      <div class="sub">2026 年度 · 本地二次元考勤台 · 数据仅保存在本机浏览器</div>
+      <div style="margin-top:8px">
+        <span class="badge">🔓 统一权限模式</span>
+        <span class="badge">💾 本地数据库</span>
+        <span class="badge">📶 完全离线可用</span>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div>
+        <label class="fld" style="margin-bottom:2px">当前操作人</label>
+        <select id="currentEmp" onchange="switchCurrent(this.value)"></select>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <button class="btn btn-mint btn-sm" onclick="seedDemo()">✨ 示例数据</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportData()">⬇ 备份</button>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer">⬆ 恢复<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+        <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑 清空</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== 导航 ===== -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 汇总展板</button>
+    <button class="tab-btn" data-tab="attendance" onclick="switchTab('attendance')">📝 考勤登记</button>
+    <button class="tab-btn" data-tab="overtime" onclick="switchTab('overtime')">⏰ 加班管理</button>
+    <button class="tab-btn" data-tab="leave" onclick="switchTab('leave')">🏖️ 假期管理</button>
+    <button class="tab-btn" data-tab="employee" onclick="switchTab('employee')">👥 员工与年假</button>
+    <button class="tab-btn" data-tab="symbol" onclick="switchTab('symbol')">📖 符号对照</button>
+  </nav>
+
+  <!-- ===== 1. 汇总展板 ===== -->
+  <section class="view active" id="view-dashboard">
+    <div class="card">
+      <h2><span class="deco">📊</span>部门 2026 年考勤汇总展板</h2>
+      <div class="toolbar">
+        <div><label class="fld">部门范围</label><select id="dashDept" onchange="renderDashboard()"></select></div>
+        <div><label class="fld">年假「本月」口径</label><select id="dashMonth" onchange="renderDashboard()"></select></div>
+      </div>
+      <div class="grid grid-4" id="kpiBox"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="deco">📅</span>出勤率统计表（按月 % · 全年汇总）</h2>
+      <div class="tip">出勤率 = 当月实际出勤（V 出勤 / W 出差）÷ 应出勤工作日（周一至周五扣除法定节假日）；当月无登记显示「—」。</div>
+      <div class="table-wrap" id="rateTable"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="deco">🌧️</span>缺勤与考勤异常统计（全年次数/天数）</h2>
+      <div class="table-wrap" id="absenceTable"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="deco">⏰</span>加班时长统计（小时 · 按类型分类）</h2>
+      <div class="table-wrap" id="otTable"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="deco">🎫</span>年假额度管理（年度应休 / 年度已休 / 本月已休）</h2>
+      <div class="table-wrap" id="quotaTable"></div>
+    </div>
+  </section>
+
+  <!-- ===== 2. 考勤登记 ===== -->
+  <section class="view" id="view-attendance">
+    <div class="card">
+      <h2><span class="deco">📝</span>每日考勤登记</h2>
+      <div class="tip">点击日历格子即可登记当天考勤符号、异常（迟到/早退/旷工）与备注；周末与法定节假日已自动高亮。</div>
+      <div class="cal-head">
+        <select id="calEmp" style="width:auto;min-width:160px" onchange="renderCalendar()"></select>
+        <button class="btn btn-ghost btn-sm" onclick="shiftMonth(-1)">◀</button>
+        <div class="title" id="calTitle"></div>
+        <button class="btn btn-ghost btn-sm" onclick="shiftMonth(1)">▶</button>
+        <select id="calJump" style="width:auto;min-width:110px" onchange="jumpMonth(this.value)"></select>
+      </div>
+      <div class="week-grid">
+        <div>周一</div><div>周二</div><div>周三</div><div>周四</div><div>周五</div><div style="color:#f06292">周六</div><div style="color:#f06292">周日</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="legend" id="calLegend"></div>
+    </div>
+    <div class="card">
+      <h2><span class="deco">⚡</span>本月考勤异常清单</h2>
+      <div class="rec-list" id="excList"></div>
+    </div>
+  </section>
+
+  <!-- ===== 3. 加班管理 ===== -->
+  <section class="view" id="view-overtime">
+    <div class="card">
+      <h2><span class="deco">⏰</span>加班 / 调休登记</h2>
+      <div class="tip">选择日期后自动判断「工作日 / 公休日 / 法定节假日」并分类计时；填写起止时间后自动计算时长，可手动修正。</div>
+      <div class="form-row">
+        <div><label class="fld">员工</label><select id="otEmp"></select></div>
+        <div><label class="fld">类型</label>
+          <select id="otMode">
+            <option value="加班">加班</option>
+            <option value="调休">调休</option>
+          </select>
+        </div>
+        <div><label class="fld">日期</label><input type="date" id="otDate" onchange="suggestOtCat()"></div>
+        <div><label class="fld">分类（自动判断可改）</label>
+          <select id="otCat">
+            <option>工作日</option><option>公休日</option><option>法定节假日</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div><label class="fld">开始时间</label><input type="time" id="otStart" onchange="calcOtHours()"></div>
+        <div><label class="fld">结束时间</label><input type="time" id="otEnd" onchange="calcOtHours()"></div>
+        <div><label class="fld">时长（小时）</label><input type="number" id="otHours" min="0" step="0.5" placeholder="自动计算"></div>
+        <div><label class="fld">事由</label><input type="text" id="otReason" placeholder="如：季度版本上线"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveOvertime()">💾 保存记录</button>
+    </div>
+    <div class="card">
+      <h2><span class="deco">🧮</span>分类计时汇总</h2>
+      <div class="grid grid-4" id="otSummary"></div>
+    </div>
+    <div class="card">
+      <h2><span class="deco">📋</span>加班 / 调休明细</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>员工</th><th>日期</th><th>类型</th><th>分类</th><th>时间段</th><th>时长(h)</th><th>事由</th><th>操作</th></tr></thead>
+          <tbody id="otRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 4. 假期管理 ===== -->
+  <section class="view" id="view-leave">
+    <div class="card">
+      <h2><span class="deco">🏖️</span>假期登记（自动同步考勤符号）</h2>
+      <div class="tip">保存后将自动把假期区间内的工作日写入考勤日历（对应符号见对照表），删除假期会同步清除其生成的考勤记录。</div>
+      <div class="form-row">
+        <div><label class="fld">员工</label><select id="lvEmp"></select></div>
+        <div><label class="fld">假期类型</label><select id="lvType"></select></div>
+        <div><label class="fld">开始日期</label><input type="date" id="lvStart" onchange="calcLvDays()"></div>
+        <div><label class="fld">结束日期</label><input type="date" id="lvEnd" onchange="calcLvDays()"></div>
+      </div>
+      <div class="form-row">
+        <div><label class="fld">天数（默认工作日，可改）</label><input type="number" id="lvDays" min="0.5" step="0.5"></div>
+        <div style="grid-column:span 3"><label class="fld">事由 / 备注</label><input type="text" id="lvReason" placeholder="如：家中有事"></div>
+      </div>
+      <button class="btn btn-purple" onclick="saveLeave()">💾 保存假期</button>
+    </div>
+    <div class="card">
+      <h2><span class="deco">📚</span>各类假期天数汇总</h2>
+      <div class="table-wrap" id="leaveSummary"></div>
+    </div>
+    <div class="card">
+      <h2><span class="deco">📋</span>假期明细</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>员工</th><th>类型</th><th>开始</th><th>结束</th><th>天数</th><th>事由</th><th>操作</th></tr></thead>
+          <tbody id="lvRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5. 员工与年假 ===== -->
+  <section class="view" id="view-employee">
+    <div class="card">
+      <h2><span class="deco">👥</span>员工登记（以员工为单元建立数据库）</h2>
+      <div class="tip">工号由系统按 <b>P+8 位数字</b> 自动生成且全库唯一、不可修改；填写出生日期后，身份证号按国标 GB 11643（地区码 330106 + 出生年月日 + 顺序码 + 校验码）自动生成。</div>
+      <div class="form-row">
+        <div><label class="fld">员工工号（自动生成 · 唯一）</label><input type="text" id="epEmpNo" readonly placeholder="保存时自动生成"></div>
+        <div><label class="fld">姓名 *</label><input type="text" id="epName" placeholder="员工姓名"></div>
+        <div><label class="fld">所在部门 *</label><input type="text" id="epDept" placeholder="如：企划部"></div>
+        <div><label class="fld">岗位</label><input type="text" id="epPos" placeholder="如：策划专员"></div>
+      </div>
+      <div class="form-row">
+        <div><label class="fld">性别</label>
+          <select id="epGender"><option value="女">女</option><option value="男">男</option></select>
+        </div>
+        <div><label class="fld">出生日期 *</label><input type="date" id="epBirth" min="1950-01-01" max="2020-12-31" onchange="previewId()"></div>
+        <div><label class="fld">手机长号 *（11 位）</label><input type="tel" id="epPhone" maxlength="11" placeholder="13800000000" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+        <div><label class="fld">手机短号（3-6 位）</label><input type="tel" id="epShort" maxlength="6" placeholder="如 600001" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+      </div>
+      <div class="form-row">
+        <div style="grid-column:span 2"><label class="fld">身份证号（自动生成）</label><div class="id-preview" id="epIdPreview">填写出生日期后自动生成</div></div>
+        <div><label class="fld">年度应享年假（天）</label><input type="number" id="epQuota" min="0" step="0.5" value="10"></div>
+      </div>
+      <input type="hidden" id="epEditId">
+      <button class="btn btn-primary" onclick="saveEmployee()">💾 保存员工</button>
+      <button class="btn btn-ghost" onclick="resetEmpForm()" id="epCancelBtn" style="display:none">取消编辑</button>
+    </div>
+    <div class="card">
+      <h2><span class="deco">🎫</span>年假额度看板</h2>
+      <div class="grid grid-3" id="quotaCards"></div>
+    </div>
+    <div class="card">
+      <h2><span class="deco">📋</span>员工名册</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>工号</th><th>姓名</th><th>部门</th><th>岗位</th><th>性别</th><th>手机长号</th><th>手机短号</th><th>出生日期</th><th>身份证号</th><th>年度应休</th><th>已休</th><th>剩余</th><th>操作</th></tr></thead>
+          <tbody id="epRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 6. 符号对照 ===== -->
+  <section class="view" id="view-symbol">
+    <div class="card">
+      <h2><span class="deco">📖</span>考勤符号对照表</h2>
+      <div class="sym-grid" id="symGrid"></div>
+    </div>
+    <div class="card">
+      <h2><span class="deco">⏰</span>加班分类 & 异常类型</h2>
+      <div class="grid grid-3">
+        <div class="sym-card" style="background:#f3e8ff"><div class="big">🌙</div><div class="name">工作日加班</div><div class="en">周一至周五 计时</div></div>
+        <div class="sym-card" style="background:#e0f2fe"><div class="big">☁️</div><div class="name">公休日加班</div><div class="en">周六周日 计时</div></div>
+        <div class="sym-card" style="background:#fff7ed"><div class="big">🎌</div><div class="name">法定节假日加班</div><div class="en">法定假日 计时</div></div>
+        <div class="sym-card" style="background:#fff7ed"><div class="big" style="color:#f59e0b">迟到</div><div class="name">考勤异常</div><div class="en">晚于规定时间到岗</div></div>
+        <div class="sym-card" style="background:#eff6ff"><div class="big" style="color:#3b82f6">早退</div><div class="name">考勤异常</div><div class="en">早于规定时间离岗</div></div>
+        <div class="sym-card" style="background:#fff1f2"><div class="big" style="color:#e11d48">旷工</div><div class="name">考勤异常</div><div class="en">无故未出勤 X</div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ===== 日期登记弹窗 ===== -->
+<div class="modal-mask" id="dayModal">
+  <div class="modal">
+    <h3>🌸 <span id="modalDate"></span> 考勤登记</h3>
+    <div style="margin-bottom:12px"><label class="fld">考勤符号</label><select id="daySym"></select></div>
+    <div style="margin-bottom:12px"><label class="fld">考勤异常</label>
+      <select id="dayExc"><option value="">无</option><option>迟到</option><option>早退</option><option>旷工</option></select>
+    </div>
+    <div><label class="fld">备注</label><textarea id="dayNote" placeholder="补充说明（可选）"></textarea></div>
+    <div class="actions">
+      <button class="btn btn-danger btn-sm" onclick="deleteDay()">清除当天</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary btn-sm" onclick="saveDay()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ================================================================
+ * 樱律出勤管理系统 · 纯前端本地版
+ * 数据存储：localStorage（键名 anime_attendance_v1）
+ * ================================================================ */
+const STORE_KEY='anime_attendance_v1';
+const YEAR=2026;
+const CURRENT_EMP_KEY='anime_attendance_current_emp';
+
+/* ---- 考勤符号字典 ---- */
+const SYMBOLS={
+  'V':{t:'出勤',c:'#059669',bg:'#d1fae5'},
+  'W':{t:'出差',c:'#0284c7',bg:'#e0f2fe'},
+  'G':{t:'工伤',c:'#d97706',bg:'#fef3c7'},
+  '/':{t:'休息',c:'#64748b',bg:'#f1f5f9'},
+  'N':{t:'年休假',c:'#7c3aed',bg:'#ede9fe'},
+  'T':{t:'调休',c:'#0d9488',bg:'#ccfbf1'},
+  'S':{t:'事假',c:'#ea580c',bg:'#ffedd5'},
+  'B':{t:'病假',c:'#dc2626',bg:'#fee2e2'},
+  'M':{t:'婚假',c:'#db2777',bg:'#fce7f3'},
+  'P':{t:'产假',c:'#e11d48',bg:'#ffe4e6'},
+  'C':{t:'护理假',c:'#0891b2',bg:'#cffafe'},
+  'D':{t:'独生子女假',c:'#4f46e5',bg:'#e0e7ff'},
+  'Y':{t:'育儿假',c:'#65a30d',bg:'#ecfccb'},
+  'L':{t:'疗休养',c:'#a16207',bg:'#fef3c7'},
+  'X':{t:'旷工',c:'#991b1b',bg:'#fee2e2'}
+};
+/* ---- 假期类型 → 考勤符号 ---- */
+const LEAVE_TYPES=['出差','工伤','调休','疗休养','事假','婚假','病假','产假','护理假','独生子女假','育儿假','年休假'];
+const LEAVE_SYMBOL={出差:'W',工伤:'G',调休:'T',疗休养:'L',事假:'S',婚假:'M',病假:'B',产假:'P',护理假:'C',独生子女假:'D',育儿假:'Y',年休假:'N'};
+const EXC_TYPES=['迟到','早退','旷工'];
+
+/* ---- 2026 法定节假日（参考安排，可按国务院正式通知在此调整）---- */
+const HOLIDAYS=new Set([
+  '2026-01-01',
+  '2026-02-16','2026-02-17','2026-02-18','2026-02-19','2026-02-20','2026-02-21','2026-02-22',
+  '2026-04-04','2026-04-05','2026-04-06',
+  '2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05',
+  '2026-06-19','2026-06-20','2026-06-21',
+  '2026-09-25','2026-09-26','2026-09-27',
+  '2026-10-01','2026-10-02','2026-10-03','2026-10-04','2026-10-05','2026-10-06','2026-10-07','2026-10-08'
+]);
+
+/* ================= 数据层 ================= */
+function freshDb(){return {employees:[],attendance:[],overtime:[],leaves:[],exceptions:[]};}
+let db=loadDb();
+function loadDb(){
+  try{const raw=localStorage.getItem(STORE_KEY);return raw?JSON.parse(raw):freshDb();}
+  catch(e){return freshDb();}
+}
+function save(){localStorage.setItem(STORE_KEY,JSON.stringify(db));}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+
+/* ================= 日期工具 ================= */
+const pad=n=>String(n).padStart(2,'0');
+const dstr=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+function parseDate(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
+const isWeekend=s=>{const w=parseDate(s).getDay();return w===0||w===6;};
+const isHoliday=s=>HOLIDAYS.has(s);
+const isWorkingDay=s=>!isWeekend(s)&&!isHoliday(s);
+function monthDates(y,m){const n=new Date(y,m,0).getDate();return Array.from({length:n},(_,i)=>`${y}-${pad(m)}-${pad(i+1)}`);}
+const workingDates=(y,m)=>monthDates(y,m).filter(isWorkingDay);
+function weekdaysBetween(s,e){
+  const out=[];let d=parseDate(s);const end=parseDate(e);
+  while(d<=end){const t=dstr(d);if(!isWeekend(t))out.push(t);d.setDate(d.getDate()+1);}
+  return out;
+}
+function calMatrix(y,m){
+  const first=new Date(y,m-1,1).getDay();
+  const offset=(first+6)%7;
+  const n=new Date(y,m,0).getDate();
+  const cells=[];
+  for(let i=0;i<offset;i++)cells.push(null);
+  for(let d=1;d<=n;d++)cells.push(`${y}-${pad(m)}-${pad(d)}`);
+  while(cells.length%7)cells.push(null);
+  return cells;
+}
+
+/* ================= 员工工号 / 身份证工具 ================= */
+const ID_WEIGHTS=[7,9,10,5,8,4,2,1,6,3,7,9,10,5,8,4,2];
+const ID_CHECK_MAP='10X98765432';
+const DEFAULT_REGION='330106'; /* 行政区码，可按公司所在地调整 */
+function idChecksum(body17){
+  let sum=0;
+  for(let i=0;i<17;i++)sum+=Number(body17[i])*ID_WEIGHTS[i];
+  return ID_CHECK_MAP[sum%11];
+}
+/* 由出生日期 + 3 位顺序码生成 18 位身份证 */
+function genIdCard(birth,seq3,region=DEFAULT_REGION){
+  const body=region+birth.replace(/-/g,'')+String(seq3).padStart(3,'0');
+  return body+idChecksum(body);
+}
+/* 生成全库唯一身份证：顺序码奇数=男、偶数=女，并避开已占用号码 */
+function genUniqueIdCard(birth,gender){
+  const used=new Set(db.employees.map(e=>e.idCard).filter(Boolean));
+  let seq=100+Math.floor(Math.random()*799);
+  for(let i=0;i<800;i++){
+    let s=(seq+i)%1000;
+    if(gender==='男'&&s%2===0)s=(s+1)%1000;
+    if(gender==='女'&&s%2===1)s=(s+1)%1000;
+    const id=genIdCard(birth,s);
+    if(!used.has(id))return id;
+  }
+  return genIdCard(birth,900+Math.floor(Math.random()*99));
+}
+/* 工号：P + 8 位递增数字，全库唯一 */
+function nextEmpNo(){
+  let max=0;
+  db.employees.forEach(e=>{const m=/^P(\d{8})$/.exec(e.empNo||'');if(m)max=Math.max(max,Number(m[1]));});
+  return 'P'+String(max+1).padStart(8,'0');
+}
+const maskId=id=>id?id.slice(0,6)+'********'+id.slice(14):'—';
+const validPhone=p=>/^1[3-9]\d{9}$/.test(p);
+function previewId(){
+  const el=$('#epIdPreview');const birth=$('#epBirth').value;const gender=$('#epGender').value;
+  const editId=$('#epEditId').value;
+  if(!birth){el.textContent='填写出生日期后自动生成';return;}
+  if(editId){
+    const old=empById(editId);
+    if(old&&old.idCard&&old.birth===birth){el.textContent=old.idCard+'（沿用原号）';return;}
+  }
+  el.textContent=genUniqueIdCard(birth,gender);
+}
+
+/* ================= 记录查询 ================= */
+const findAtt=(emp,date)=>db.attendance.find(r=>r.emp===emp&&r.date===date);
+const findExc=(emp,date)=>db.exceptions.find(r=>r.emp===emp&&r.date===date);
+const empName=id=>(db.employees.find(e=>e.id===id)||{}).name||'(已删除)';
+const empById=id=>db.employees.find(e=>e.id===id);
+function h(n){return Math.round((Number(n)+Number.EPSILON)*10)/10;}
+
+/* ================= Toast ================= */
+let toastTimer;
+function toast(msg){
+  const el=$('#toast');el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+/* ================= 导航 ================= */
+function switchTab(tab){
+  $$('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  $$('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+tab));
+  renderAll();
+}
+
+/* ================= 顶部：当前操作人 ================= */
+function renderCurrentEmp(){
+  const sel=$('#currentEmp');const old=sel.value||localStorage.getItem(CURRENT_EMP_KEY);
+  sel.innerHTML=db.employees.map(e=>`<option value="${e.id}">${e.name}（${e.dept||'—'}）</option>`).join('')
+    ||'<option value="">请先添加员工</option>';
+  if(old&&db.employees.some(e=>e.id===old))sel.value=old;
+  localStorage.setItem(CURRENT_EMP_KEY,sel.value);
+}
+function switchCurrent(id){
+  localStorage.setItem(CURRENT_EMP_KEY,id);
+  ['#calEmp','#otEmp','#lvEmp'].forEach(s=>{const el=$(s);if(el&&db.employees.some(e=>e.id===id))el.value=id;});
+  renderCalendar();
+}
+function fillEmpSelects(){
+  const cur=localStorage.getItem(CURRENT_EMP_KEY);
+  const opts=db.employees.map(e=>`<option value="${e.id}">${e.name}（${e.dept||'—'}）</option>`).join('');
+  ['#calEmp','#otEmp','#lvEmp'].forEach(s=>{const el=$(s);if(!el)return;el.innerHTML=opts||'<option value="">请先添加员工</option>';
+    if(cur&&db.employees.some(e=>e.id===cur))el.value=cur;});
+}
+
+/* ================= 1. 汇总展板 ================= */
+function empMonthRate(empId,m){
+  const work=workingDates(YEAR,m);
+  const has=db.attendance.some(r=>r.emp===empId&&r.date.startsWith(`${YEAR}-${pad(m)}-`));
+  if(!has)return null;
+  const present=work.filter(d=>{const r=findAtt(empId,d);return r&&(r.sym==='V'||r.sym==='W');}).length;
+  return {present,total:work.length,rate:work.length?present/work.length:null};
+}
+function empYearRate(empId){
+  let p=0,t=0,any=false;
+  for(let m=1;m<=12;m++){const r=empMonthRate(empId,m);if(r){any=true;p+=r.present;t+=r.total;}}
+  return any?{present:p,total:t,rate:t?p/t:null}:null;
+}
+function rateClass(r){if(r===null||r===undefined)return 'rate-na';if(r>=.95)return 'rate-good';if(r>=.85)return 'rate-mid';return 'rate-bad';}
+function rateText(r){return r===null||r===undefined?'<span class="rate-na">—</span>':`<span class="${rateClass(r)}">${(r*100).toFixed(1)}%</span>`;}
+function deptMonthRate(emps,m){
+  let p=0,t=0,any=false;
+  emps.forEach(e=>{const r=empMonthRate(e.id,m);if(r){any=true;p+=r.present;t+=r.total;}});
+  return any?(t?p/t:null):null;
+}
+function deptYearRate(emps){
+  let p=0,t=0,any=false;
+  for(let m=1;m<=12;m++)emps.forEach(e=>{const r=empMonthRate(e.id,m);if(r){any=true;p+=r.present;t+=r.total;}});
+  return any?(t?p/t:null):null;
+}
+/* 全年符号计数（仅工作日） */
+function yearSymbolCount(empId,sym){
+  return db.attendance.filter(r=>r.emp===empId&&r.date.startsWith(YEAR+'-')&&r.sym===sym&&isWorkingDay(r.date)).length;
+}
+function yearExcCount(empId,type){
+  return db.exceptions.filter(r=>r.emp===empId&&r.date.startsWith(YEAR+'-')&&r.type===type).length;
+}
+function otAgg(empId){
+  const agg={'工作日':0,'公休日':0,'法定节假日':0,'调休':0};
+  db.overtime.filter(r=>r.emp===empId&&r.date.startsWith(YEAR+'-')).forEach(r=>{
+    agg[r.cat]=(agg[r.cat]||0)+Number(r.hours);
+    if(r.mode==='调休')agg['调休']+=Number(r.hours);
+  });
+  return agg;
+}
+function annualUsed(empId){return yearSymbolCount(empId,'N');}
+function monthUsedN(empId,m){
+  return db.attendance.filter(r=>r.emp===empId&&r.date.startsWith(`${YEAR}-${pad(m)}-`)&&r.sym==='N'&&isWorkingDay(r.date)).length;
+}
+
+function renderDashboard(){
+  /* 部门下拉 */
+  const depts=['ALL',...new Set(db.employees.map(e=>e.dept||'未分组'))];
+  const dSel=$('#dashDept');const dOld=dSel.value;
+  dSel.innerHTML='<option value="ALL">全部部门</option>'+depts.slice(1).map(d=>`<option>${d}</option>`).join('');
+  if(depts.includes(dOld))dSel.value=dOld;
+  const mSel=$('#dashMonth');
+  if(!mSel.options.length)mSel.innerHTML=Array.from({length:12},(_,i)=>`<option value="${i+1}">${i+1}月</option>`).join('');
+  const nowMonth=new Date().getMonth()+1;mSel.value=(mSel.value||String(nowMonth));
+  const qm=Number(mSel.value);
+
+  const emps=dSel.value==='ALL'?db.employees:db.employees.filter(e=>(e.dept||'未分组')===dSel.value);
+
+  /* KPI */
+  const yearRate=deptYearRate(emps);
+  const totalOt=emps.reduce((s,e)=>{const a=otAgg(e.id);return s+a['工作日']+a['公休日']+a['法定节假日'];},0);
+  const totalExc=emps.reduce((s,e)=>s+EXC_TYPES.reduce((x,t)=>x+yearExcCount(e.id,t),0),0);
+  const quotaLeft=emps.reduce((s,e)=>s+Math.max(0,(Number(e.quota)||0)-annualUsed(e.id)),0);
+  $('#kpiBox').innerHTML=[
+    ['pink','👥','在册员工',emps.length+' 人'],
+    ['purple','📈','全年出勤率',yearRate===null?'—':(yearRate*100).toFixed(1)+'%'],
+    ['blue','⏰','加班总时长',h(totalOt)+' h'],
+    ['amber','⚡','异常事件',totalExc+' 次'],
+    ['mint','🎫','年假剩余额度',h(quotaLeft)+' 天']
+  ].map(k=>`<div class="kpi ${k[0]}"><div class="ico">${k[1]}</div><div class="lbl">${k[2]}</div><div class="num">${k[3]}</div></div>`).join('');
+
+  /* 表1：月出勤率 */
+  let rows=emps.map(e=>{
+    const tds=Array.from({length:12},(_,i)=>`<td>${rateText((empMonthRate(e.id,i+1)||{}).rate??null)}</td>`).join('');
+    const yr=empYearRate(e.id);
+    return `<tr><td class="name-cell">${e.name}</td>${tds}<td><b>${rateText(yr?yr.rate:null)}</b></td></tr>`;
+  }).join('');
+  if(emps.length>1){
+    const mtds=Array.from({length:12},(_,i)=>`<td>${rateText(deptMonthRate(emps,i+1))}</td>`).join('');
+    rows+=`<tr class="subtotal"><td class="name-cell">部门合计</td>${mtds}<td>${rateText(deptYearRate(emps))}</td></tr>`;
+  }
+  $('#rateTable').innerHTML=table(`<tr><th class="name-cell">员工</th>${Array.from({length:12},(_,i)=>`<th>${i+1}月</th>`).join('')}<th>全年</th></tr>`,rows);
+
+  /* 表2：缺勤与异常 */
+  const absSyms=[['T','调休'],['S','事假'],['B','病假'],['N','年休假'],['M','婚假'],['P','产假'],['C','护理假'],['Y','育儿假'],['X','旷工']];
+  rows=emps.map(e=>{
+    const tds=absSyms.map(([s])=>`<td>${yearSymbolCount(e.id,s)}</td>`).join('');
+    const other=['G','D','L'].reduce((x,s)=>x+yearSymbolCount(e.id,s),0);
+    const exc=EXC_TYPES.map(t=>`<td>${yearExcCount(e.id,t)}</td>`).join('');
+    return `<tr><td class="name-cell">${e.name}</td>${tds}<td>${other}</td>${exc}</tr>`;
+  }).join('');
+  if(emps.length){
+    const sum=sym=>emps.reduce((x,e)=>x+yearSymbolCount(e.id,sym),0);
+    const sumExc=t=>emps.reduce((x,e)=>x+yearExcCount(e.id,t),0);
+    const otherSum=emps.reduce((x,e)=>x+['G','D','L'].reduce((a,s)=>a+yearSymbolCount(e.id,s),0),0);
+    rows+=`<tr class="subtotal"><td class="name-cell">合计</td>${absSyms.map(([s])=>`<td>${sum(s)}</td>`).join('')}<td>${otherSum}</td>${EXC_TYPES.map(t=>`<td>${sumExc(t)}</td>`).join('')}</tr>`;
+  }
+  $('#absenceTable').innerHTML=table(
+    `<tr><th class="name-cell">员工</th>${absSyms.map(([,n])=>`<th>${n}</th>`).join('')}<th>其他假*</th>${EXC_TYPES.map(t=>`<th>${t}</th>`).join('')}</tr>`,
+    rows||emptyRow(14)
+  )+ '<div class="muted" style="margin-top:8px">* 其他假 = 工伤 G + 独生子女假 D + 疗休养 L；出差 W 属正常出勤不计缺勤。</div>';
+
+  /* 表3：加班分类 */
+  rows=emps.map(e=>{
+    const a=otAgg(e.id);
+    return `<tr><td class="name-cell">${e.name}</td><td>${h(a['工作日'])}</td><td>${h(a['公休日'])}</td><td>${h(a['法定节假日'])}</td><td><b>${h(a['工作日']+a['公休日']+a['法定节假日'])}</b></td><td class="mode-调休">${h(a['调休'])}</td></tr>`;
+  }).join('');
+  if(emps.length){
+    const sumCat=c=>h(emps.reduce((x,e)=>x+otAgg(e.id)[c],0));
+    rows+=`<tr class="subtotal"><td class="name-cell">合计</td><td>${sumCat('工作日')}</td><td>${sumCat('公休日')}</td><td>${sumCat('法定节假日')}</td><td>${sumCat('工作日')+sumCat('公休日')+sumCat('法定节假日')>=0?h(emps.reduce((x,e)=>{const a=otAgg(e.id);return x+a['工作日']+a['公休日']+a['法定节假日'];},0)):0}</td><td>${sumCat('调休')}</td></tr>`;
+  }
+  $('#otTable').innerHTML=table(
+    '<tr><th class="name-cell">员工</th><th>工作日(h)</th><th>公休日(h)</th><th>法定节假日(h)</th><th>加班合计(h)</th><th>其中调休(h)</th></tr>',
+    rows||emptyRow(6)
+  );
+
+  /* 表4：年假额度 */
+  rows=emps.map(e=>{
+    const quota=Number(e.quota)||0,used=annualUsed(e.id),mUsed=monthUsedN(e.id,qm),left=Math.max(0,h(quota-used));
+    const pct=quota?Math.min(100,used/quota*100):0;
+    return `<tr><td class="name-cell">${e.name}</td><td>${quota}</td><td>${used}</td><td>${mUsed}（${qm}月）</td><td><b style="color:#7c3aed">${left}</b></td>
+    <td style="min-width:140px"><div class="progress" style="margin:0"><i style="width:${pct}%"></i></div></td></tr>`;
+  }).join('');
+  $('#quotaTable').innerHTML=table(
+    '<tr><th class="name-cell">员工</th><th>年度应休</th><th>年度已休</th><th>本月已休</th><th>剩余</th><th>使用进度</th></tr>',
+    rows||emptyRow(6)
+  );
+}
+function table(head,rows){return `<table><thead>${head}</thead><tbody>${rows}</tbody></table>`;}
+function emptyRow(n){return `<tr><td colspan="${n}" class="empty-hint">🌱 还没有数据，先去登记或点击右上角「示例数据」体验吧</td></tr>`;}
+
+/* ================= 2. 考勤日历 ================= */
+let calMonth=new Date().getFullYear()===YEAR?new Date().getMonth():0; /* 0-11 */
+function shiftMonth(d){calMonth=Math.min(11,Math.max(0,calMonth+d));renderCalendar();}
+function jumpMonth(v){calMonth=Number(v);renderCalendar();}
+function renderCalendar(){
+  const m=calMonth+1;
+  $('#calTitle').textContent=`${YEAR} 年 ${m} 月`;
+  const jump=$('#calJump');
+  jump.innerHTML=Array.from({length:12},(_,i)=>`<option value="${i}">${i+1}月</option>`).join('');
+  jump.value=String(calMonth);
+
+  const emp=$('#calEmp').value;
+  $('#calGrid').innerHTML=calMatrix(YEAR,m).map(date=>{
+    if(!date)return '<div class="cal-cell empty"></div>';
+    const r=emp?findAtt(emp,date):null;
+    const ex=emp?findExc(emp,date):null;
+    const cls=['cal-cell',isWeekend(date)?'weekend':'',isHoliday(date)?'holiday':''].join(' ');
+    const sym=r&&r.sym&&SYMBOLS[r.sym]?SYMBOLS[r.sym]:null;
+    const chip=sym?`<div class="chip" style="color:${sym.c};background:${sym.bg}"><span class="s">${r.sym}</span><span class="l">${sym.t}</span></div>`:'<div class="chip" style="color:#d6c7dd;background:#faf6fc"><span class="s">+</span><span class="l">登记</span></div>';
+    const excTag=ex?`<span class="exc-tag exc-${ex.type}">${ex.type}</span>`:'';
+    const noteDot=r&&r.note?'<span class="note-dot">📝</span>':'';
+    return `<div class="${cls}" onclick="openDay('${date}')"><div class="date-num">${Number(date.slice(-2))}日${isHoliday(date)?' 🎌':''}</div>${chip}<div>${excTag}</div>${noteDot}</div>`;
+  }).join('');
+
+  $('#calLegend').innerHTML=Object.entries(SYMBOLS).map(([k,v])=>
+    `<span class="mini-chip" style="color:${v.c};background:${v.bg}">${k} = ${v.t}</span>`).join('');
+  renderExcList();
+}
+function renderExcList(){
+  const emp=$('#calEmp').value;const m=calMonth+1;
+  const list=db.exceptions.filter(r=>r.emp===emp&&r.date.startsWith(`${YEAR}-${pad(m)}-`))
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  $('#excList').innerHTML=list.length?list.map(r=>{
+    const att=findAtt(emp,r.date);
+    return `<div class="rec"><span class="exc-tag exc-${r.type}" style="font-size:12px;padding:2px 10px">${r.type}</span>
+      <b>${r.date}</b><span>${empName(emp)}</span>
+      <span class="muted">当天符号：${att&&att.sym?att.sym+' '+SYMBOLS[att.sym].t:'未登记'}</span>
+      <span class="sp"><button class="btn btn-ghost btn-sm" onclick="openDay('${r.date}')">编辑</button></span></div>`;
+  }).join(''):'<div class="empty-hint">本月暂无异常记录 🍀</div>';
+}
+let modalDate=null;
+function openDay(date){
+  modalDate=date;
+  const emp=$('#calEmp').value;
+  if(!emp){toast('请先在「员工与年假」中添加员工');return;}
+  $('#modalDate').textContent=date+(isHoliday(date)?'（法定节假日）':isWeekend(date)?'（公休日）':'（工作日）');
+  const symSel=$('#daySym');
+  symSel.innerHTML='<option value="">未登记</option>'+Object.entries(SYMBOLS).map(([k,v])=>`<option value="${k}">${k} = ${v.t}</option>`).join('');
+  const r=findAtt(emp,date),ex=findExc(emp,date);
+  symSel.value=r?r.sym:'';
+  $('#dayExc').value=ex?ex.type:'';
+  $('#dayNote').value=r?r.note||'':'';
+  $('#dayModal').classList.add('show');
+}
+function closeModal(){$('#dayModal').classList.remove('show');}
+function saveDay(){
+  const emp=$('#calEmp').value;const sym=$('#daySym').value;const exc=$('#dayExc').value;const note=$('#dayNote').value.trim();
+  let rec=findAtt(emp,modalDate);
+  if(sym||note){
+    if(!rec){rec={id:uid(),emp,date:modalDate,sym,note:''};db.attendance.push(rec);}
+    rec.sym=sym;rec.note=note;
+  }else if(rec){db.attendance=db.attendance.filter(r=>r!==rec);}
+  db.exceptions=db.exceptions.filter(r=>!(r.emp===emp&&r.date===modalDate));
+  if(exc)db.exceptions.push({id:uid(),emp,date:modalDate,type:exc});
+  save();closeModal();renderCalendar();toast('登记成功 ✨');
+}
+function deleteDay(){
+  const emp=$('#calEmp').value;
+  db.attendance=db.attendance.filter(r=>!(r.emp===emp&&r.date===modalDate));
+  db.exceptions=db.exceptions.filter(r=>!(r.emp===emp&&r.date===modalDate));
+  save();closeModal();renderCalendar();toast('已清除当天登记 🧹');
+}
+
+/* ================= 3. 加班管理 ================= */
+function suggestOtCat(){
+  const d=$('#otDate').value;if(!d)return;
+  $('#otCat').value=isHoliday(d)?'法定节假日':isWeekend(d)?'公休日':'工作日';
+}
+function calcOtHours(){
+  const s=$('#otStart').value,e=$('#otEnd').value;if(!s||!e)return;
+  let [sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
+  let mins=(eh*60+em)-(sh*60+sm);if(mins<=0)mins+=24*60;
+  $('#otHours').value=h(mins/60);
+}
+function saveOvertime(){
+  const emp=$('#otEmp').value;
+  if(!emp){toast('请先选择员工');return;}
+  const date=$('#otDate').value;
+  if(!date){toast('请选择日期');return;}
+  const hours=Number($('#otHours').value);
+  if(!(hours>0)){toast('请填写有效时长');return;}
+  db.overtime.push({
+    id:uid(),emp,date,mode:$('#otMode').value,cat:$('#otCat').value,
+    start:$('#otStart').value,end:$('#otEnd').value,hours,reason:$('#otReason').value.trim()
+  });
+  save();$('#otReason').value='';$('#otStart').value='';$('#otEnd').value='';$('#otHours').value='';
+  renderOvertime();toast('加班记录已保存 ⏰');
+}
+function deleteOvertime(id){
+  if(!confirm('确定删除这条加班/调休记录吗？'))return;
+  db.overtime=db.overtime.filter(r=>r.id!==id);save();renderOvertime();toast('已删除');
+}
+function renderOvertime(){
+  const aggAll={'工作日':0,'公休日':0,'法定节假日':0,'调休':0};
+  db.overtime.filter(r=>r.date.startsWith(YEAR+'-')).forEach(r=>{
+    aggAll[r.cat]=(aggAll[r.cat]||0)+Number(r.hours);
+    if(r.mode==='调休')aggAll['调休']+=Number(r.hours);
+  });
+  $('#otSummary').innerHTML=[
+    ['purple','🌙 工作日加班',h(aggAll['工作日'])+' h'],
+    ['blue','☁️ 公休日加班',h(aggAll['公休日'])+' h'],
+    ['amber','🎌 节假日加班',h(aggAll['法定节假日'])+' h'],
+    ['mint','🔄 调休累计',h(aggAll['调休'])+' h']
+  ].map(k=>`<div class="kpi ${k[0]}"><div class="lbl">${k[1]}</div><div class="num">${k[2]}</div></div>`).join('');
+
+  const rows=db.overtime.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`
+    <tr><td>${empName(r.emp)}</td><td>${r.date}</td>
+    <td class="mode-${r.mode}">${r.mode}</td>
+    <td><span class="tag-cat cat-${r.cat}">${r.cat}</span></td>
+    <td>${r.start||'—'} ~ ${r.end||'—'}</td><td><b>${h(r.hours)}</b></td>
+    <td>${r.reason||'<span class="muted">—</span>'}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteOvertime('${r.id}')">删除</button></td></tr>`).join('');
+  $('#otRows').innerHTML=rows||emptyRow(8);
+}
+
+/* ================= 4. 假期管理 ================= */
+function initLeaveTypes(){$('#lvType').innerHTML=LEAVE_TYPES.map(t=>`<option>${t}</option>`).join('');}
+function calcLvDays(){
+  const s=$('#lvStart').value,e=$('#lvEnd').value;
+  if(s&&e&&parseDate(e)>=parseDate(s))$('#lvDays').value=weekdaysBetween(s,e).length;
+}
+function saveLeave(){
+  const emp=$('#lvEmp').value;
+  if(!emp){toast('请先选择员工');return;}
+  const s=$('#lvStart').value,e=$('#lvEnd').value;
+  if(!s||!e||parseDate(e)<parseDate(s)){toast('请填写正确的起止日期');return;}
+  const days=Number($('#lvDays').value);
+  if(!(days>0)){toast('请填写有效天数');return;}
+  const type=$('#lvType').value;
+  const id=uid();
+  db.leaves.push({id,emp,type,start:s,end:e,days,reason:$('#lvReason').value.trim()});
+  /* 同步考勤符号（区间内工作日） */
+  const sym=LEAVE_SYMBOL[type];const dates=weekdaysBetween(s,e);
+  dates.forEach(d=>{
+    let rec=findAtt(emp,d);
+    if(!rec){rec={id:uid(),emp,date:d,sym,note:'',gen:'leave:'+id};db.attendance.push(rec);}
+    else{rec.sym=sym;rec.gen='leave:'+id;}
+  });
+  save();$('#lvReason').value='';$('#lvDays').value='';$('#lvStart').value='';$('#lvEnd').value='';
+  renderLeave();renderCalendar();toast(`假期已保存，并同步 ${dates.length} 个工作日考勤 🏖️`);
+}
+function deleteLeave(id){
+  if(!confirm('删除假期将同步清除其生成的考勤记录，确定吗？'))return;
+  db.leaves=db.leaves.filter(r=>r.id!==id);
+  db.attendance=db.attendance.filter(r=>r.gen!=='leave:'+id);
+  save();renderLeave();renderCalendar();toast('假期及关联考勤已删除');
+}
+function renderLeave(){
+  /* 汇总：员工 × 假期类型（天数） */
+  const typeSet=LEAVE_TYPES;
+  const sum=(emp,t)=>h(db.leaves.filter(r=>r.emp===emp&&r.type===t).reduce((x,r)=>x+Number(r.days),0));
+  let rows=db.employees.map(e=>`<tr><td class="name-cell">${e.name}</td>${typeSet.map(t=>`<td>${sum(e.id,t)}</td>`).join('')}<td><b>${h(typeSet.reduce((x,t)=>x+sum(e.id,t),0))}</b></td></tr>`).join('');
+  if(db.employees.length){
+    const colSum=t=>h(db.leaves.filter(r=>r.type===t).reduce((x,r)=>x+Number(r.days),0));
+    rows+=`<tr class="subtotal"><td class="name-cell">合计</td>${typeSet.map(t=>`<td>${colSum(t)}</td>`).join('')}<td>${h(db.leaves.reduce((x,r)=>x+Number(r.days),0))}</td></tr>`;
+  }
+  $('#leaveSummary').innerHTML=table(
+    `<tr><th class="name-cell">员工</th>${typeSet.map(t=>`<th>${t}</th>`).join('')}<th>合计</th></tr>`,
+    rows||emptyRow(typeSet.length+2)
+  );
+  $('#lvRows').innerHTML=db.leaves.slice().sort((a,b)=>b.start.localeCompare(a.start)).map(r=>`
+    <tr><td>${empName(r.emp)}</td>
+    <td><span class="mini-chip" style="color:${SYMBOLS[LEAVE_SYMBOL[r.type]].c};background:${SYMBOLS[LEAVE_SYMBOL[r.type]].bg}">${LEAVE_SYMBOL[r.type]} ${r.type}</span></td>
+    <td>${r.start}</td><td>${r.end}</td><td><b>${h(r.days)}</b></td>
+    <td>${r.reason||'<span class="muted">—</span>'}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteLeave('${r.id}')">删除</button></td></tr>`).join('')
+    ||emptyRow(7);
+}
+
+/* ================= 5. 员工与年假 ================= */
+function saveEmployee(){
+  const name=$('#epName').value.trim();
+  if(!name){toast('请填写姓名');return;}
+  const editId=$('#epEditId').value;
+  const data={name,dept:$('#epDept').value.trim()||'未分组',pos:$('#epPos').value.trim(),quota:Number($('#epQuota').value)||0};
+  if(editId){Object.assign(empById(editId),data);toast('员工信息已更新 ✨');}
+  else{
+    if(db.employees.some(e=>e.name===name&&e.dept===data.dept)){toast('同部门下已存在该员工');return;}
+    const id=uid();db.employees.push({id,...data});
+    if(!localStorage.getItem(CURRENT_EMP_KEY))localStorage.setItem(CURRENT_EMP_KEY,id);
+    toast('员工已添加 🎉');
+  }
+  save();resetEmpForm();renderAll();
+}
+function editEmployee(id){
+  const e=empById(id);
+  $('#epEditId').value=id;$('#epName').value=e.name;$('#epDept').value=e.dept==='未分组'?'':e.dept;
+  $('#epPos').value=e.pos||'';$('#epQuota').value=e.quota||0;
+  $('#epCancelBtn').style.display='inline-flex';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function resetEmpForm(){
+  $('#epEditId').value='';$('#epName').value='';$('#epDept').value='';$('#epPos').value='';$('#epQuota').value=10;
+  $('#epCancelBtn').style.display='none';
+}
+function deleteEmployee(id){
+  const cnt=db.attendance.filter(r=>r.emp===id).length+db.overtime.filter(r=>r.emp===id).length
+    +db.leaves.filter(r=>r.emp===id).length+db.exceptions.filter(r=>r.emp===id).length;
+  if(!confirm(`确定删除「${empName(id)}」吗？将同时删除其 ${cnt} 条关联考勤/加班/假期记录，不可恢复！`))return;
+  db.employees=db.employees.filter(e=>e.id!==id);
+  db.attendance=db.attendance.filter(r=>r.emp!==id);
+  db.overtime=db.overtime.filter(r=>r.emp!==id);
+  db.leaves=db.leaves.filter(r=>r.emp!==id);
+  db.exceptions=db.exceptions.filter(r=>r.emp!==id);
+  if(localStorage.getItem(CURRENT_EMP_KEY)===id)localStorage.removeItem(CURRENT_EMP_KEY);
+  save();renderAll();toast('员工已删除');
+}
+function renderEmployee(){
+  const nowM=new Date().getFullYear()===YEAR?new Date().getMonth()+1:1;
+  $('#quotaCards').innerHTML=db.employees.map(e=>{
+    const quota=Number(e.quota)||0,used=annualUsed(e.id),mUsed=monthUsedN(e.id,nowM),left=Math.max(0,h(quota-used));
+    const pct=quota?Math.min(100,used/quota*100):0;
+    return `<div class="quota-card">
+      <div class="qn">🐰 ${e.name} <span class="muted">${e.dept||''} · ${e.pos||''}</span></div>
+      <div class="progress"><i style="width:${pct}%"></i></div>
+      <div class="quota-nums">
+        <span>年度应休 <b>${quota}</b></span><span>年度已休 <b>${used}</b></span>
+        <span>${nowM}月已休 <b>${mUsed}</b></span><span>剩余 <b>${left}</b></span>
+      </div></div>`;
+  }).join('')||'<div class="empty-hint" style="grid-column:1/-1">🌱 还没有员工档案</div>';
+
+  $('#epRows').innerHTML=db.employees.map(e=>{
+    const used=annualUsed(e.id);
+    return `<tr><td class="name-cell">${e.name}</td><td>${e.dept||'—'}</td><td>${e.pos||'—'}</td>
+    <td>${e.quota||0}</td><td>${used}</td><td><b style="color:#7c3aed">${Math.max(0,h((e.quota||0)-used))}</b></td>
+    <td>
+      <button class="btn btn-purple btn-sm" onclick="editEmployee('${e.id}')">编辑</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteEmployee('${e.id}')">删除</button>
+    </td></tr>`;
+  }).join('')||emptyRow(7);
+}
+
+/* ================= 6. 符号对照 ================= */
+function renderSymbol(){
+  $('#symGrid').innerHTML=Object.entries(SYMBOLS).map(([k,v])=>
+    `<div class="sym-card" style="background:${v.bg}"><div class="big" style="color:${v.c}">${k}</div><div class="name" style="color:${v.c}">${v.t}</div></div>`).join('');
+}
+
+/* ================= 备份 / 恢复 / 清空 / 示例 ================= */
+function exportData(){
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`樱律考勤备份_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();URL.revokeObjectURL(a.href);toast('备份文件已下载 ⬇');
+}
+function importData(ev){
+  const f=ev.target.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const data=JSON.parse(reader.result);
+      if(!Array.isArray(data.employees)||!Array.isArray(data.attendance))throw new Error('bad');
+      if(!confirm('恢复将覆盖当前全部数据，确定继续吗？'))return;
+      db=Object.assign(freshDb(),data);save();renderAll();toast('数据已恢复 ⬆');
+    }catch(e){toast('文件格式不正确，恢复失败');}
+  };
+  reader.readAsText(f);ev.target.value='';
+}
+function clearAll(){
+  if(!confirm('将清空全部员工与考勤数据，建议先备份。确定清空吗？'))return;
+  db=freshDb();localStorage.removeItem(CURRENT_EMP_KEY);save();renderAll();toast('已清空全部数据 🧹');
+}
+/* 确定性伪随机 */
+function rnd(seed){const x=Math.sin(seed*99.13)*10000;return x-Math.floor(x);}
+function seedDemo(){
+  if(db.employees.length&&!confirm('载入示例数据会覆盖当前数据，确定继续吗？'))return;
+  db=freshDb();
+  const defs=[
+    {name:'鹿乃',dept:'企划部',pos:'策划专员',quota:10},
+    {name:'星野',dept:'企划部',pos:'视觉设计',quota:10},
+    {name:'泷川',dept:'技术部',pos:'前端工程师',quota:15},
+    {name:'千代',dept:'技术部',pos:'测试工程师',quota:7}
+  ];
+  defs.forEach(d=>db.employees.push({id:uid(),...d}));
+  const [e1,e2,e3,e4]=db.employees.map(e=>e.id);
+  localStorage.setItem(CURRENT_EMP_KEY,e1);
+
+  /* 1-6 月工作日考勤 */
+  let seed=1;
+  for(let m=1;m<=6;m++){
+    workingDates(YEAR,m).forEach((d,idx)=>{
+      db.employees.forEach((e,ei)=>{
+        const r=rnd(seed++);
+        let sym='V';
+        if(ei===1&&r>0.93)sym='S';
+        else if(ei===1&&r>0.89)sym='B';
+        else if(ei===2&&r>0.95)sym='T';
+        else if(ei===3&&r>0.96)sym='B';
+        else if(r<0.02)sym='W';
+        db.attendance.push({id:uid(),emp:e.id,date:d,sym,note:sym==='W'?'客户现场支持':''});
+        if(sym==='V'&&rnd(seed++)>0.965)db.exceptions.push({id:uid(),emp:e.id,date:d,type:'迟到'});
+        if(sym==='V'&&rnd(seed++)>0.975)db.exceptions.push({id:uid(),emp:e.id,date:d,type:'早退'});
+      });
+    });
+  }
+  /* 假期（含同步逻辑模拟） */
+  function addLeave(emp,type,s,e,reason){
+    const id=uid();const days=weekdaysBetween(s,e).length;
+    db.leaves.push({id,emp,type,start:s,end:e,days,reason});
+    const sym=LEAVE_SYMBOL[type];
+    weekdaysBetween(s,e).forEach(d=>{
+      let rec=findAtt(emp,d);
+      if(!rec){rec={id:uid(),emp,date:d,sym,note:'',gen:'leave:'+id};db.attendance.push(rec);}
+      else{rec.sym=sym;rec.gen='leave:'+id;}
+    });
+  }
+  addLeave(e1,'事假','2026-03-11','2026-03-12','家中有事');
+  addLeave(e2,'病假','2026-02-25','2026-02-26','感冒发烧');
+  addLeave(e3,'年休假','2026-05-18','2026-05-22','旅行计划');
+  addLeave(e4,'调休','2026-06-10','2026-06-10','调休一天');
+  addLeave(e1,'婚假','2026-04-07','2026-04-10','婚假');
+
+  /* 加班记录 */
+  const ot=[
+    [e3,'2026-01-23','19:00','22:00','工作日','版本攻坚'],
+    [e3,'2026-02-28','10:00','17:00','公休日','周六联调'],
+    [e2,'2026-02-28','10:00','16:00','公休日','视觉走查'],
+    [e4,'2026-04-30','09:30','17:30','法定节假日','节前保障值班'],
+    [e3,'2026-05-01','10:00','18:00','法定节假日','线上应急'],
+    [e1,'2026-03-06','18:30','21:00','工作日','提案赶工'],
+    [e2,'2026-06-12','19:00','21:30','工作日','海报修改']
+  ];
+  ot.forEach(([emp,date,s,e,cat,reason])=>{
+    let [sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
+    const hours=h(((eh*60+em)-(sh*60+sm))/60);
+    db.overtime.push({id:uid(),emp,date,mode:cat==='工作日'&&rnd(seed++)>.5?'调休':'加班',cat,start:s,end:e,hours,reason});
+  });
+  save();renderAll();toast('示例数据已载入 ✨');
+}
+
+/* ================= 初始化 ================= */
+function renderAll(){
+  renderCurrentEmp();
+  fillEmpSelects();
+  renderDashboard();
+  renderCalendar();
+  renderOvertime();
+  renderLeave();
+  renderEmployee();
+  renderSymbol();
+}
+initLeaveTypes();
+renderAll();
+/* 点击遮罩关闭弹窗 */
+$('#dayModal').addEventListener('click',e=>{if(e.target.id==='dayModal')closeModal();});
+</script>
+</body>
+</html>
